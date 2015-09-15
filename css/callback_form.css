@@ -1,0 +1,17 @@
+.callback-form-wrapper .callback-form-top-text {
+  text-align: center;
+}
+
+.callback-form-wrapper .callback-form-form {
+
+}
+
+.callback-form-wrapper .callback-form-form .callback-form-left-column {
+  float: left;
+  width: 50%;
+}
+
+.callback-form-wrapper .callback-form-form .callback-form-right-column {
+  float: left;
+  width: 50%;
+}

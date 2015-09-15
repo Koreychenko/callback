@@ -1,0 +1,267 @@
+<?php
+
+function callback_init() {
+
+  drupal_add_js(drupal_get_path('module', 'callback').'/callback.js');
+  drupal_add_js(array(
+    'callback-question-modal' => array(
+      'modalSize' => array(
+        'type' => 'fixed',
+        'width' => 560,
+        'height' => 560,
+      ),
+     //Animation mode
+     'animation' => 'fadeIn',
+     'closeText' => 'X',
+     'closeImage' => '',
+     'modalTheme' => 'salonModalHtml',
+     'modalClass' => 'salon-callback',
+    ),
+  ), 'setting');
+}
+
+
+/**
+ * Implements hook_menu().
+ */
+function callback_menu() {
+  $items = array();
+
+  $items['ajax/callback/callback/%ctools_js'] = array(
+    'page callback' => 'callback_callback',
+    'page arguments' => array(3),
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+  );
+
+  $items['ajax/callback/question/%ctools_js'] = array(
+    'page callback' => 'callback_question_callback',
+    'page arguments' => array(3),
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+  );
+
+  return $items;
+}
+
+
+/**
+ * Helper function to make a link.
+ */
+function _callback_make_link($link_text = '', $link_classes = '') {
+  // Set a default value if no text in supplied.
+  if (empty($link_text)) {
+    $link_text = t('Call me, please!');
+  }
+
+
+
+  if (!empty($link_classes)) {
+    $link_classes = explode(' ', $link_classes);
+  } else {
+    $link_classes = array();
+  }
+
+  $link_classes[] = 'ctools-use-modal';
+
+  return l($link_text, 'ajax/callback/callback/nojs', array('attributes' => array('class' => $link_classes)));
+}
+
+/**
+ * Ajax menu callback.
+ */
+function callback_callback($ajax) {
+  if ($ajax) {
+    ctools_include('ajax');
+    ctools_include('modal');
+
+    $form_state = array(
+      'ajax' => TRUE,
+      'title' => t('Enter your phone number'),
+    );
+
+    // Use ctools to generate ajax instructions for the browser to create
+    // a form in a modal popup.
+    $output = ctools_modal_form_wrapper('callback_form', $form_state);
+
+    // If the form has been submitted, there may be additional instructions
+    // such as dismissing the modal popup.
+    if (!empty($form_state['ajax_commands'])) {
+      $output = $form_state['ajax_commands'];
+    }
+
+    // Return the ajax instructions to the browser via ajax_render().
+    print ajax_render($output);
+    drupal_exit();
+  }
+  else {
+    drupal_set_message(t('Please turn javascript on'), 'status', FALSE);
+    drupal_goto('<front>');
+  }
+}
+
+/**
+ * Ajax menu callback.
+ */
+function callback_question_callback($ajax) {
+  if ($ajax) {
+    ctools_include('ajax');
+    ctools_include('modal');
+
+    $form_state = array(
+      'ajax' => TRUE,
+      'title' => 'Задать нам вопрос',
+    );
+
+    // Use ctools to generate ajax instructions for the browser to create
+    // a form in a modal popup.
+    $output = ctools_modal_form_wrapper('callback_question_form', $form_state);
+
+    // If the form has been submitted, there may be additional instructions
+    // such as dismissing the modal popup.
+    if (!empty($form_state['ajax_commands'])) {
+      $output = $form_state['ajax_commands'];
+    }
+
+    // Return the ajax instructions to the browser via ajax_render().
+    print ajax_render($output);
+    drupal_exit();
+  }
+  else {
+    drupal_set_message(t('Please turn javascript on'), 'status', FALSE);
+    drupal_goto('<front>');
+  }
+}
+
+
+/**
+ * Drupal form to be put in a modal.
+ */
+function callback_form($form, &$form_state) {
+  $form = array();
+
+  $form['#prefix'] = '<h3 class="question-title">Закажите звонок</h3>';
+
+  $form['name'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Your name'),
+    '#attributes' => array('placeholder' => 'Ваше имя'),
+  );
+
+  $form['phone'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Your phone'),
+    '#attributes' => array('placeholder' => 'Ваш телефон'),
+  );
+
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => 'Позвоните мне!',
+  );
+
+  return $form;
+}
+
+function callback_question_form($form, &$form_state) {
+  $form = array();
+
+  $form['#prefix'] = '<h3 class="question-title">Задайте нам вопрос</h3>';
+
+  $form['mail'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Your e-mail'),
+    '#attributes' => array('placeholder' => 'Ваш e-mail'),
+  );
+
+  $form['phone'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Your phone'),
+    '#attributes' => array('placeholder' => 'Ваш телефон'),
+  );
+
+  $form['question'] = array(
+    '#type' => 'textarea',
+    '#title' => t('Your question'),
+    '#attributes' => array('placeholder' => 'Ваш вопрос'),
+  );
+
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => 'Задать вопрос',
+  );
+
+  return $form;
+}
+
+function callback_form_small($form, $form_state) {
+  $form = array();
+
+  $form['#prefix'] = '<div id="callback-form-small-ajax-wrapper">';
+  $form['#suffix'] = '</div>';
+
+  $form['phone'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Your phone'),
+    '#attributes' => array(
+      'placeholder' => t('Enter your phone'),
+      ),
+  );
+
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => 'Перезвонить',
+    '#ajax' => array(
+      'callback' => 'callback_form_small_ajax_callback',
+      'wrapper' => 'callback-form-small-ajax-wrapper',
+      ),
+  );
+
+  return $form;
+}
+
+function callback_form_small_ajax_callback(&$form, &$form_state) {
+  if (form_get_errors()) {
+    return $form;
+  } else {
+    return '<div class="callback-form-message">'.t('Thank you! We will call you in several minutes.').'</div>';
+  }
+}
+
+
+
+/**
+ * Drupal form submit handler.
+ */
+function callback_question_form_submit(&$form, &$form_state) {
+  // Tell the browser to close the modal.
+  $form_state['ajax_commands'][] = ctools_modal_command_dismiss();
+}
+
+
+/**
+ * Drupal form submit handler.
+ */
+function callback_form_submit(&$form, &$form_state) {
+  // Tell the browser to close the modal.
+  $form_state['ajax_commands'][] = ctools_modal_command_dismiss();
+}
+
+
+function callback_ctools_plugin_directory($owner, $plugin_type) {
+  if ($owner == 'ctools' && $plugin_type == 'content_types') {
+    return 'plugins/' . $plugin_type;
+  }
+}
+
+function callback_theme() {
+  return array(
+    'callback_form_mini' => array(
+      'variables' => array(
+        'top_text' => '',
+        'left_text' => '',
+        'form' => '',
+        ),
+      'template' => 'callback-form-mini',
+      )
+    );
+}
